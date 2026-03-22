@@ -11,6 +11,8 @@ import com.AAA.e_commerce.order.model.Order;
 import com.AAA.e_commerce.order.model.OrderItem;
 import com.AAA.e_commerce.order.model.OrderStatus;
 import com.AAA.e_commerce.order.repository.OrderRepository;
+import com.AAA.e_commerce.user.model.User;
+import com.AAA.e_commerce.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -29,13 +31,16 @@ public class OrderService {
     private final CartRepository cartRepository;
     private final OrderRepository repository;
     private final CartService cartService;
-    public OrderResponseDto createOrder(Long cartId) {
-        Cart cart = cartRepository.findById(cartId)
+    private final UserRepository userRepository;
+    public OrderResponseDto createOrder(Long userid) {
+        User user = userRepository.findById(userid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found"));
+        Cart cart = new Cart();
         if (cart.getCartItems().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cart is empty");
         }
         Order order = new Order();
+        order.setUser(user);
         order.setOrderStatus(OrderStatus.PENDING);
         order.setTime(LocalDateTime.now());
 
@@ -61,7 +66,7 @@ public class OrderService {
         order.setTotalAmount(total);
 
         Order savedOrder = repository.save(order);
-        cartService.clearCart(cartId);
+        cartService.clearCart(cart.getId());
         return mapper.toOrderResponseDto(savedOrder);
     }
 

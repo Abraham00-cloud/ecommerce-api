@@ -1,5 +1,6 @@
 package com.AAA.e_commerce.order.model;
 
+import com.AAA.e_commerce.user.model.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -29,4 +30,7 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<OrderItem> orderItems;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 }
