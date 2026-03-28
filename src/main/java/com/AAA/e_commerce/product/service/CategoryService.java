@@ -5,12 +5,11 @@ import com.AAA.e_commerce.product.dto.response.CategoryResponseDto;
 import com.AAA.e_commerce.product.mapper.CategoryMapper;
 import com.AAA.e_commerce.product.model.Category;
 import com.AAA.e_commerce.product.repository.CategoryRepository;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 
 @Service
 @AllArgsConstructor
@@ -24,23 +23,32 @@ public class CategoryService {
     }
 
     public CategoryResponseDto updateCategory(Long id, CategoryRequestDto requestDto) {
-        Category category = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
+        Category category =
+                repository
+                        .findById(id)
+                        .orElseThrow(
+                                () ->
+                                        new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND, "Category not found"));
         category.setName(requestDto.name());
         Category updatedCategory = repository.save(category);
         return mapper.toCategoryResponseDto(updatedCategory);
     }
+
     public CategoryResponseDto getCategory(Long id) {
-        Category category = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
+        Category category =
+                repository
+                        .findById(id)
+                        .orElseThrow(
+                                () ->
+                                        new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND, "Category not found"));
         return mapper.toCategoryResponseDto(category);
     }
 
     public List<CategoryResponseDto> getAllCategories() {
-        List<CategoryResponseDto> allCategories = repository.findAll()
-                .stream()
-                .map(mapper::toCategoryResponseDto)
-                .toList();
+        List<CategoryResponseDto> allCategories =
+                repository.findAll().stream().map(mapper::toCategoryResponseDto).toList();
         return allCategories;
     }
 

@@ -9,7 +9,8 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class ProductImageMapper {
     public ProductImageResponseDto toProductImageResponseDto(ProductImage productImage) {
-        ProductImageResponseDto productImageResponseDto = new ProductImageResponseDto(productImage.getId(), productImage.getUrl());
+        ProductImageResponseDto productImageResponseDto =
+                new ProductImageResponseDto(productImage.getId(), productImage.getUrl());
         return productImageResponseDto;
     }
 }

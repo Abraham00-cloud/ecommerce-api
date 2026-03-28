@@ -1,7 +1,7 @@
 package com.AAA.e_commerce.user.mapper;
 
-import com.AAA.e_commerce.user.dto.RegisterRequestDto;
-import com.AAA.e_commerce.user.dto.UserResponseDto;
+import com.AAA.e_commerce.user.dto.request.RegisterRequestDto;
+import com.AAA.e_commerce.user.dto.response.UserResponseDto;
 import com.AAA.e_commerce.user.model.User;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +17,11 @@ public class UserMapper {
     }
 
     public UserResponseDto toUserResponseDto(User user) {
-        return new UserResponseDto(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getCart().getId());
+        return new UserResponseDto(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getCart().getId());
     }
-
-
 }

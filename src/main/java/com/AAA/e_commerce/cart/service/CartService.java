@@ -5,18 +5,21 @@ import com.AAA.e_commerce.cart.mapper.CartMapper;
 import com.AAA.e_commerce.cart.model.Cart;
 import com.AAA.e_commerce.cart.model.CartItem;
 import com.AAA.e_commerce.cart.repository.CartRepository;
+import com.AAA.e_commerce.user.model.User;
+import com.AAA.e_commerce.user.service.UserService;
+import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.math.BigDecimal;
-
 @Service
 @AllArgsConstructor
 public class CartService {
-    public final CartRepository cartRepository;
-    public final CartMapper cartMapper;
+    private final CartRepository cartRepository;
+    private final CartMapper cartMapper;
+    private UserService userService;
+
     public CartResponseDto createCart() {
         Cart cart = new Cart();
         cart.setTotalAmount(BigDecimal.ZERO);
@@ -24,15 +27,22 @@ public class CartService {
         return cartMapper.toCartResponseDto(savedCart);
     }
 
-    public CartResponseDto getCart(Long cartId) {
-        Cart cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found"));
+    public CartResponseDto getMyCart() {
+        User user = userService.getAuthenticatedUser();
+        Cart cart = user.getCart();
+
+        if (cart == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not initialized");
+        }
         return cartMapper.toCartResponseDto(cart);
     }
 
-    public void clearCart(Long cartId) {
-        Cart cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found"));
+    public void clearCart() {
+        User user = userService.getAuthenticatedUser();
+        Cart cart = user.getCart();
+        if (cart == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found for this user");
+        }
         cart.getCartItems().forEach(item -> item.setCart(null));
         cart.getCartItems().clear();
         cart.setTotalAmount(BigDecimal.ZERO);
@@ -41,12 +51,11 @@ public class CartService {
     }
 
     public void reCalculateCartTotal(Cart cart) {
-        BigDecimal total = cart.getCartItems()
-                .stream()
-                .map(CartItem::getTotalPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal total =
+                cart.getCartItems().stream()
+                        .map(CartItem::getTotalPrice)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
         cart.setTotalAmount(total);
         cartRepository.save(cart);
     }
-
 }

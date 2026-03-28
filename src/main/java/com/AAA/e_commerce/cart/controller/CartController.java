@@ -20,15 +20,15 @@ public class CartController {
         return service.createCart();
     }
 
-    @Operation(summary = "get Cart")
-    @GetMapping("/{cartId}")
-    public CartResponseDto getCart(@PathVariable Long cartId) {
-        return service.getCart(cartId);
+    @Operation(summary = "get user Cart")
+    @GetMapping("/mine")
+    public CartResponseDto getCart() {
+        return service.getMyCart();
     }
 
     @Operation(summary = "delete Cart")
-    @DeleteMapping("/{cartId}")
+    @DeleteMapping("/clear")
     public void clearCart(@PathVariable Long cartId) {
-        service.clearCart(cartId);
+        service.clearCart();
     }
 }

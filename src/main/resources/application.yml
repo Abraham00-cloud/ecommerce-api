@@ -1,10 +1,10 @@
 spring:
   application:
     name: e_commerce
-  security:
-    user:
-      name: admin
-      password: "$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2"
+#  security:
+#    user:
+#      name: admin
+#      password: "$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2"
   servlet:
     multipart:
       max-file-size: 5MB
@@ -21,6 +21,10 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    # 4. Update Database type and Dialect
     database: mysql
     database-platform: org.hibernate.dialect.MySQLDialect
+app:
+  admin:
+    email: admin@gmial.com
+    password: adminPass
+

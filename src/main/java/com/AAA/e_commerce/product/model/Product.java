@@ -1,17 +1,10 @@
 package com.AAA.e_commerce.product.model;
 
-import com.AAA.e_commerce.product.model.ProductImage;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-
-import java.math.BigDecimal;
-
+import lombok.*;
 
 @Entity
 @AllArgsConstructor
@@ -22,10 +15,12 @@ public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
     private BigDecimal price;
     private long weight;
     private String description;
+    private Long quantity;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> images = new ArrayList<>();

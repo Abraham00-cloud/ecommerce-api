@@ -9,83 +9,93 @@ import com.AAA.e_commerce.cart.repository.CartItemRepository;
 import com.AAA.e_commerce.cart.repository.CartRepository;
 import com.AAA.e_commerce.product.model.Product;
 import com.AAA.e_commerce.product.repository.ProductRepository;
+import com.AAA.e_commerce.user.model.User;
+import com.AAA.e_commerce.user.service.UserService;
+import jakarta.transaction.Transactional;
+import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.math.BigDecimal;
-
 @Service
 @AllArgsConstructor
 public class CartItemService {
     private final CartItemMapper mapper;
-    private final CartItemRepository repository;
+    private final CartItemRepository cartItemRepository;
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
     private final CartService cartService;
+    private final UserService userService;
 
-    public CartItemResponseDto addCartItem(Long cartId, CartItemRequestDto requestDto) {
-        Cart cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found"));
-        Product product = productRepository.findById(requestDto.product_id())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found") );
+    @Transactional
+    public CartItemResponseDto addCartItem(CartItemRequestDto requestDto) {
+        User user = userService.getAuthenticatedUser();
+        Cart cart = user.getCart();
+        Product product =
+                productRepository
+                        .findById(requestDto.product_id())
+                        .orElseThrow(
+                                () ->
+                                        new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND, "Product not found"));
         if (requestDto.quantity() <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantity must be greater than zero");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Quantity must be greater than zero");
         }
-        CartItem existingCartItem = repository.findByCartAndProduct(cart, product);
+        CartItem cartItem =
+                cartItemRepository
+                        .findByCartAndProduct(cart, product)
+                        .orElseGet(
+                                () -> {
+                                    CartItem newItem = new CartItem();
+                                    newItem.setCart(cart);
+                                    newItem.setProduct(product);
+                                    newItem.setQuantity(0);
+                                    newItem.setUnitPrice(product.getPrice());
+                                    return newItem;
+                                });
 
-        if (requestDto.quantity() <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantity must be greater than zero");
-        }
-        if (existingCartItem != null) {
-            int newQuantity = existingCartItem.getQuantity() + requestDto.quantity();
-            existingCartItem.setQuantity(newQuantity);
-            existingCartItem.setTotalPrice(BigDecimal.valueOf(newQuantity).multiply(existingCartItem.getUnitPrice()));
-            CartItem updatedCartItem = repository.save(existingCartItem);
+        cartItem.updateQuantityAndPrice(requestDto.quantity(), product.getPrice());
 
-            cartService.reCalculateCartTotal(cart);
-            return mapper.toCartItemResponseDto(updatedCartItem);
-
-
-        }
-
-        CartItem cartItem = mapper.toCartItem(requestDto);
-        cartItem.setCart(cart);
-        cartItem.setProduct(product);
-        cartItem.setUnitPrice(product.getPrice());
-        cartItem.setTotalPrice(product.getPrice().multiply(BigDecimal.valueOf(requestDto.quantity())));
-        cartItem.setQuantity(requestDto.quantity());
-
-        CartItem savedCartItem = repository.save(cartItem);
+        CartItem savedCartItem = cartItemRepository.save(cartItem);
 
         cartService.reCalculateCartTotal(cart);
         return mapper.toCartItemResponseDto(savedCartItem);
     }
 
     public CartItemResponseDto updateQuantity(Long cartItemId, int quantity) {
-        CartItem cartItem = repository.findById(cartItemId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CartItem not found"));
+        CartItem cartItem =
+                cartItemRepository
+                        .findById(cartItemId)
+                        .orElseThrow(
+                                () ->
+                                        new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND, "CartItem not found"));
         if (quantity <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantity must be greater than zero");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Quantity must be greater than zero");
         }
         cartItem.setQuantity(quantity);
 
         cartItem.setTotalPrice(cartItem.getUnitPrice().multiply(BigDecimal.valueOf(quantity)));
 
-        CartItem updatedCartItem = repository.save(cartItem);
+        CartItem updatedCartItem = cartItemRepository.save(cartItem);
         cartService.reCalculateCartTotal(cartItem.getCart());
         return mapper.toCartItemResponseDto(updatedCartItem);
     }
 
     public void removeCartItem(Long cartItemId) {
-        CartItem cartItem = repository.findById(cartItemId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CartItem not found"));
+        CartItem cartItem =
+                cartItemRepository
+                        .findById(cartItemId)
+                        .orElseThrow(
+                                () ->
+                                        new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND, "CartItem not found"));
         Cart cart = cartItem.getCart();
-        repository.delete(cartItem);
+        cartItemRepository.delete(cartItem);
 
         cartService.reCalculateCartTotal(cart);
-
     }
-
 }

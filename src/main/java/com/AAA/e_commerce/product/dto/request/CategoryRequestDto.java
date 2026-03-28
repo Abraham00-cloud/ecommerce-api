@@ -1,4 +1,5 @@
 package com.AAA.e_commerce.product.dto.request;
 
-public record CategoryRequestDto(String name) {
-}
+import jakarta.validation.constraints.NotBlank;
+
+public record CategoryRequestDto(@NotBlank(message = "Category name is required") String name) {}

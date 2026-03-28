@@ -7,9 +7,8 @@ public record ProductResponseDto(
         Long id,
         String name,
         BigDecimal price,
+        Long quantity,
         long weight,
         String description,
         String category,
-        List<ProductImageResponseDto> images
-) {
-}
+        List<ProductImageResponseDto> images) {}

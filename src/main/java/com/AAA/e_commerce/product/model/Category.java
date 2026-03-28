@@ -1,13 +1,11 @@
 package com.AAA.e_commerce.product.model;
 
 import jakarta.persistence.*;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.List;
-
 
 @Entity
 @AllArgsConstructor
