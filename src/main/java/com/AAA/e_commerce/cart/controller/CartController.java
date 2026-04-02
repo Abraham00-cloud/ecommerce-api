@@ -28,7 +28,7 @@ public class CartController {
 
     @Operation(summary = "delete Cart")
     @DeleteMapping("/clear")
-    public void clearCart(@PathVariable Long cartId) {
+    public void clearCart(Long cartId) {
         service.clearCart();
     }
 }

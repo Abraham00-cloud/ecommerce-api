@@ -27,4 +27,8 @@ app:
   admin:
     email: admin@gmial.com
     password: adminPass
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.web.access: TRACE
 

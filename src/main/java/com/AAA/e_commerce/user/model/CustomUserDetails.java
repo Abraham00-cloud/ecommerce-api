@@ -9,7 +9,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 @RequiredArgsConstructor
-public class CustomeUserDetails implements UserDetails {
+public class CustomUserDetails implements UserDetails {
     private final User user;
 
     @Override
