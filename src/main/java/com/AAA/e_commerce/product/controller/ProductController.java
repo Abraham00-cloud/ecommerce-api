@@ -6,13 +6,15 @@ import com.AAA.e_commerce.product.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.AllArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/products")
+@RequestMapping("/api/v1/products")
 @Tag(name = "Product Api", description = "Endpoints for managing products")
 public class ProductController {
     private final ProductService service;
@@ -25,8 +27,8 @@ public class ProductController {
 
     @GetMapping
     @Operation(summary = "get all products")
-    public List<ProductResponseDto> getAllProduct() {
-        return service.getAllProducts();
+    public Page<ProductResponseDto> getAllProduct(@ParameterObject Pageable pageable) {
+        return service.getAllProducts(pageable);
     }
 
     @GetMapping("/{id}")

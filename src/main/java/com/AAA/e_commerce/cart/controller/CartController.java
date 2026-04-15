@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/cart")
+@RequestMapping("/api/v1/cart")
 @Tag(name = "Cart api", description = "Endpoints for managing cart")
 public class CartController {
     private CartService service;

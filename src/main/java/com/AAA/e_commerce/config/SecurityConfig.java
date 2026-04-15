@@ -1,5 +1,6 @@
 package com.AAA.e_commerce.config;
 
+import com.AAA.e_commerce.exception.EntryPointExceptionHandler;
 import com.AAA.e_commerce.user.service.CustomUserDetailService;
 import com.AAA.e_commerce.user.service.JwtAuthFilter;
 import io.swagger.v3.oas.models.Components;
@@ -10,11 +11,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -22,16 +23,17 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final CustomUserDetailService customUserDetailService;
     private final JwtAuthFilter jwtAuthFilter;
+    private final EntryPointExceptionHandler entryPointExceptionHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
@@ -41,7 +43,8 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
                         request ->
-                                request.requestMatchers("/api/users/register", "/api/users/login")
+                                request.requestMatchers(
+                                                "/api/v1/users/register", "/api/v1/users/login")
                                         .permitAll()
                                         .requestMatchers(
                                                 "/v3/api-docs/**",
@@ -50,39 +53,41 @@ public class SecurityConfig {
                                         .permitAll()
                                         .requestMatchers(
                                                 HttpMethod.POST,
-                                                "/api/products/**",
-                                                "/api/categories/**")
+                                                "/api/v1/products/**",
+                                                "/api/v1/categories/**")
                                         .hasRole("ADMIN")
                                         .requestMatchers(
                                                 HttpMethod.PUT,
-                                                "/api/products/**",
-                                                "/api/categories/**")
+                                                "/api/v1/products/**",
+                                                "/api/v1/categories/**")
                                         .hasRole("ADMIN")
                                         .requestMatchers(
                                                 HttpMethod.PATCH,
-                                                "/api/products/**",
-                                                "/api/categories/**")
+                                                "/api/v1/products/**",
+                                                "/api/v1/categories/**")
                                         .hasRole("ADMIN")
                                         .requestMatchers(
                                                 HttpMethod.DELETE,
-                                                "/api/products/**",
-                                                "/api/categories/**")
+                                                "/api/v1/products/**",
+                                                "/api/v1/categories/**")
                                         .hasRole("ADMIN")
                                         .requestMatchers(
-                                                HttpMethod.POST, "/api/products/*/images/**")
+                                                HttpMethod.POST, "/api/v1/products/*/images/**")
                                         .hasRole("ADMIN")
                                         .requestMatchers(
-                                                HttpMethod.DELETE, "/api/products/*/images/**")
+                                                HttpMethod.DELETE, "/api/v1/products/*/images/**")
                                         .hasRole("ADMIN")
                                         .requestMatchers(
                                                 HttpMethod.GET,
-                                                "/api/products/**",
-                                                "/api/categories/**")
+                                                "/api/v1/products/**",
+                                                "/api/v1/categories/**")
                                         .permitAll()
-                                        .requestMatchers("/api/users/update/**")
+                                        .requestMatchers("/api/v1/users/update/**")
                                         .authenticated()
                                         .requestMatchers(
-                                                "/api/cart/**", "/api/cartItem/**", "/api/order/**")
+                                                "/api/v1/cart/**",
+                                                "/api/v1/cartItem/**",
+                                                "/api/v1/order/**")
                                         .authenticated()
                                         .anyRequest()
                                         .authenticated())
@@ -90,9 +95,7 @@ public class SecurityConfig {
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(
-                        ex ->
-                                ex.authenticationEntryPoint(
-                                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                        exception -> exception.authenticationEntryPoint(entryPointExceptionHandler))
                 .build();
     }
 

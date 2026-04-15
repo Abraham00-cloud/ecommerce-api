@@ -5,10 +5,10 @@ import com.AAA.e_commerce.product.mapper.ProductImageMapper;
 import com.AAA.e_commerce.product.model.Product;
 import com.AAA.e_commerce.product.model.ProductImage;
 import com.AAA.e_commerce.product.repository.ProductImageRepository;
-import com.AAA.e_commerce.product.repository.ProductRepository;
 import jakarta.transaction.Transactional;
-import java.util.List;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -16,18 +16,12 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 @AllArgsConstructor
 public class ProductImageService {
-    private final ProductImageRepository repository;
-    private final ProductRepository productRepository;
+    private final ProductImageRepository imageRepository;
     private final ProductImageMapper mapper;
+    private final ProductService productService;
 
     public ProductImageResponseDto addImages(Long productId, String url) {
-        Product product =
-                productRepository
-                        .findById(productId)
-                        .orElseThrow(
-                                () ->
-                                        new ResponseStatusException(
-                                                HttpStatus.NOT_FOUND, "Product not found"));
+        Product product = productService.getProductById(productId);
         ProductImage image = new ProductImage();
         image.setProduct(product);
         image.setUrl(url);
@@ -38,35 +32,28 @@ public class ProductImageService {
         image.setFileType(fileType);
         product.getImages().add(image);
 
-        repository.save(image);
-        productRepository.save(product);
+        imageRepository.save(image);
+        productService.saveProduct(product);
 
         return mapper.toProductImageResponseDto(image);
     }
 
-    public List<ProductImageResponseDto> getImagesByProduct(Long productId) {
-        Product product =
-                productRepository
-                        .findById(productId)
-                        .orElseThrow(
-                                () ->
-                                        new ResponseStatusException(
-                                                HttpStatus.NOT_FOUND, "Product not found"));
-        List<ProductImageResponseDto> images =
-                product.getImages().stream().map(mapper::toProductImageResponseDto).toList();
-        return images;
+    public Page<ProductImageResponseDto> getImagesByProduct(Long productId, Pageable pageable) {
+        Product product = productService.getProductById(productId);
+        Page<ProductImage> images = imageRepository.findByProductId(productId, pageable);
+        return images.map(mapper::toProductImageResponseDto);
     }
 
     @Transactional
     public void deleteImage(Long imageId) {
         ProductImage image =
-                repository
+                imageRepository
                         .findById(imageId)
                         .orElseThrow(
                                 () ->
                                         new ResponseStatusException(
                                                 HttpStatus.NOT_FOUND, "Image not found"));
         image.getProduct().getImages().remove(image);
-        repository.delete(image);
+        imageRepository.delete(image);
     }
 }

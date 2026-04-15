@@ -6,9 +6,8 @@ import com.AAA.e_commerce.cart.mapper.CartItemMapper;
 import com.AAA.e_commerce.cart.model.Cart;
 import com.AAA.e_commerce.cart.model.CartItem;
 import com.AAA.e_commerce.cart.repository.CartItemRepository;
-import com.AAA.e_commerce.cart.repository.CartRepository;
 import com.AAA.e_commerce.product.model.Product;
-import com.AAA.e_commerce.product.repository.ProductRepository;
+import com.AAA.e_commerce.product.service.ProductService;
 import com.AAA.e_commerce.user.model.User;
 import com.AAA.e_commerce.user.service.UserService;
 import jakarta.transaction.Transactional;
@@ -23,22 +22,15 @@ import org.springframework.web.server.ResponseStatusException;
 public class CartItemService {
     private final CartItemMapper mapper;
     private final CartItemRepository cartItemRepository;
-    private final CartRepository cartRepository;
-    private final ProductRepository productRepository;
     private final CartService cartService;
     private final UserService userService;
+    private final ProductService productService;
 
     @Transactional
     public CartItemResponseDto addCartItem(CartItemRequestDto requestDto) {
         User user = userService.getAuthenticatedUser();
         Cart cart = user.getCart();
-        Product product =
-                productRepository
-                        .findById(requestDto.product_id())
-                        .orElseThrow(
-                                () ->
-                                        new ResponseStatusException(
-                                                HttpStatus.NOT_FOUND, "Product not found"));
+        Product product = productService.getProductById(requestDto.product_id());
         if (requestDto.quantity() <= 0) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "Quantity must be greater than zero");

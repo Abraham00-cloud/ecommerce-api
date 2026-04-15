@@ -23,7 +23,7 @@ public class ProductMapper {
     }
 
     public ProductResponseDto toProductResponseDto(Product product) {
-        List<ProductImageResponseDto> iamges =
+        List<ProductImageResponseDto> images =
                 product.getImages().stream()
                         .map(img -> new ProductImageResponseDto(img.getId(), img.getUrl()))
                         .toList();
@@ -35,6 +35,6 @@ public class ProductMapper {
                 product.getWeight(),
                 product.getDescription(),
                 product.getCategory().getName(),
-                iamges);
+                images);
     }
 }

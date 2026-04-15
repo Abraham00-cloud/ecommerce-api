@@ -6,15 +6,17 @@ import com.AAA.e_commerce.product.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.AllArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 
 @Service
 @AllArgsConstructor
 @RestController
-@RequestMapping("/api/categories")
+@RequestMapping("/api/v1/categories")
 @Tag(name = "Category Api", description = "Endpoints for managing Product Category")
 public class CategoryController {
     private final CategoryService service;
@@ -33,8 +35,8 @@ public class CategoryController {
 
     @Operation(summary = "get all Categories")
     @GetMapping
-    public List<CategoryResponseDto> getAllCategories() {
-        return service.getAllCategories();
+    public Page<CategoryResponseDto> getAllCategories(@ParameterObject Pageable pageable) {
+        return service.getAllCategories(pageable);
     }
 
     @PutMapping("/{id}")

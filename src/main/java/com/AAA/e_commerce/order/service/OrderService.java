@@ -2,7 +2,6 @@ package com.AAA.e_commerce.order.service;
 
 import com.AAA.e_commerce.cart.model.Cart;
 import com.AAA.e_commerce.cart.model.CartItem;
-import com.AAA.e_commerce.cart.repository.CartRepository;
 import com.AAA.e_commerce.cart.service.CartService;
 import com.AAA.e_commerce.order.dto.response.OrderResponseDto;
 import com.AAA.e_commerce.order.mapper.OrderMapper;
@@ -13,15 +12,15 @@ import com.AAA.e_commerce.order.repository.OrderRepository;
 import com.AAA.e_commerce.product.model.Product;
 import com.AAA.e_commerce.user.model.Role;
 import com.AAA.e_commerce.user.model.User;
-import com.AAA.e_commerce.user.repository.UserRepository;
 import com.AAA.e_commerce.user.service.UserService;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -30,10 +29,8 @@ import org.springframework.web.server.ResponseStatusException;
 @AllArgsConstructor
 public class OrderService {
     private final OrderMapper mapper;
-    private final CartRepository cartRepository;
     private final OrderRepository repository;
     private final CartService cartService;
-    private final UserRepository userRepository;
     private final UserService userService;
 
     @Transactional
@@ -83,8 +80,8 @@ public class OrderService {
         return mapper.toOrderResponseDto(savedOrder);
     }
 
-    public List<OrderResponseDto> getAllOrders() {
-        return repository.findAll().stream().map(mapper::toOrderResponseDto).toList();
+    public Page<OrderResponseDto> getAllOrders(Pageable pageable) {
+        return repository.findAll(pageable).map(mapper::toOrderResponseDto);
     }
 
     public OrderResponseDto getOrder(Long orderId) {
@@ -106,10 +103,11 @@ public class OrderService {
         return mapper.toOrderResponseDto(order);
     }
 
-    public List<OrderResponseDto> getMyOrders() {
+    public Page<OrderResponseDto> getMyOrders(Pageable pageable) {
         User currentUser = userService.getAuthenticatedUser();
+        Page<Order> allUserOrders = repository.findByUser(currentUser, pageable);
 
-        return repository.findByUser(currentUser).stream().map(mapper::toOrderResponseDto).toList();
+        return allUserOrders.map(mapper::toOrderResponseDto);
     }
 
     public OrderResponseDto updateStatus(Long orderId, OrderStatus status) {

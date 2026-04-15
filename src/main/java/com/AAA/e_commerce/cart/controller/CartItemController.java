@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/cartItem")
+@RequestMapping("/api/v1/cartItem")
 @Validated
 @Tag(name = "CartItem api", description = "Endpoints for managing cartItem")
 public class CartItemController {

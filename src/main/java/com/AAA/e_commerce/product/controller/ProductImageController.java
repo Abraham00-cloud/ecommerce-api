@@ -3,14 +3,16 @@ package com.AAA.e_commerce.product.controller;
 import com.AAA.e_commerce.product.dto.response.ProductImageResponseDto;
 import com.AAA.e_commerce.product.service.ProductImageService;
 import jakarta.validation.constraints.NotBlank;
-import java.util.List;
 import lombok.AllArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/products/{productId}/images")
+@RequestMapping("/api/v1/products/{productId}/images")
 @Validated
 public class ProductImageController {
     private final ProductImageService service;
@@ -22,8 +24,9 @@ public class ProductImageController {
     }
 
     @GetMapping
-    public List<ProductImageResponseDto> getImages(@PathVariable Long productId) {
-        return service.getImagesByProduct(productId);
+    public Page<ProductImageResponseDto> getImages(
+            @PathVariable Long productId, @ParameterObject Pageable pageable) {
+        return service.getImagesByProduct(productId, pageable);
     }
 
     @DeleteMapping("/{imageId}")

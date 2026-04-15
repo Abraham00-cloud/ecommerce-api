@@ -5,10 +5,10 @@ import com.AAA.e_commerce.product.dto.response.ProductResponseDto;
 import com.AAA.e_commerce.product.mapper.ProductMapper;
 import com.AAA.e_commerce.product.model.Category;
 import com.AAA.e_commerce.product.model.Product;
-import com.AAA.e_commerce.product.repository.CategoryRepository;
 import com.AAA.e_commerce.product.repository.ProductRepository;
-import java.util.List;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -18,17 +18,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class ProductService {
     private final ProductMapper mapper;
     private final ProductRepository repository;
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
     public ProductResponseDto createProduct(ProductRequestDto requestDto) {
         Product product = mapper.toProduct(requestDto);
-        Category category =
-                categoryRepository
-                        .findById(requestDto.categoryId())
-                        .orElseThrow(
-                                () ->
-                                        new ResponseStatusException(
-                                                HttpStatus.NOT_FOUND, "Category not found"));
+        Category category = categoryService.getCategoryById(requestDto.categoryId());
         product.setCategory(category);
 
         Product savedProduct = repository.save(product);
@@ -46,8 +40,9 @@ public class ProductService {
         return mapper.toProductResponseDto(product);
     }
 
-    public List<ProductResponseDto> getAllProducts() {
-        return repository.findAll().stream().map(mapper::toProductResponseDto).toList();
+    public Page<ProductResponseDto> getAllProducts(Pageable pageable) {
+        Page<Product> productPage = repository.findAll(pageable);
+        return productPage.map(mapper::toProductResponseDto);
     }
 
     public ProductResponseDto updateProduct(Long id, ProductRequestDto requestDto) {
@@ -58,12 +53,13 @@ public class ProductService {
                                 () ->
                                         new ResponseStatusException(
                                                 HttpStatus.NOT_FOUND, "product not found"));
-        Category category = categoryRepository.findById(requestDto.categoryId()).orElseThrow();
+        Category category = categoryService.getCategoryById(requestDto.categoryId());
 
         product.setName(requestDto.name());
         product.setPrice(requestDto.price());
         product.setWeight(requestDto.weight());
         product.setDescription(requestDto.description());
+        product.setQuantity(requestDto.quantity());
         product.setCategory(category);
 
         Product updatedProduct = repository.save(product);
@@ -79,5 +75,20 @@ public class ProductService {
                                         new ResponseStatusException(
                                                 HttpStatus.NOT_FOUND, "product not found"));
         repository.delete(product);
+    }
+
+    public Product getProductById(Long productId) {
+        Product product =
+                repository
+                        .findById(productId)
+                        .orElseThrow(
+                                () ->
+                                        new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND, "Product not found"));
+        return product;
+    }
+
+    public void saveProduct(Product product) {
+        Product savedProduct = repository.save(product);
     }
 }
