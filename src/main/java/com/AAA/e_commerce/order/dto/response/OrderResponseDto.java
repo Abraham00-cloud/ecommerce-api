@@ -6,6 +6,7 @@ import java.util.Set;
 
 public record OrderResponseDto(
         Long orderId,
+        String transactionReference,
         BigDecimal totalAmount,
         OrderStatus orderStatus,
         Set<OrderItemResponseDto> orderItems) {}

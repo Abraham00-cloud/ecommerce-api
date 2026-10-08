@@ -22,6 +22,10 @@ spring:
       hibernate:
         format_sql: true
     database: mysql
+
+paystack:
+  base-url: https://api.paystack.co
+  secret-key: sk_test_d7dcccfaf6e1c4cc9e94b684c7b4c527f858c236
 app:
   admin:
     email: admin@gmial.com

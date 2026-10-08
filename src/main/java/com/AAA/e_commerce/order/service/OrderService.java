@@ -18,6 +18,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,7 +45,11 @@ public class OrderService {
         Order order = new Order();
         order.setUser(user);
         order.setOrderStatus(OrderStatus.PENDING);
-        order.setTime(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        order.setTime(now);
+        order.setExpiresAt(now.plusMinutes(15));
+
+        order.setTransactionReference(UUID.randomUUID().toString());
 
         Set<OrderItem> orderItems = new HashSet<>();
 
@@ -72,6 +78,7 @@ public class OrderService {
                 orderItems.stream()
                         .map(OrderItem::getTotalPrice)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
+
 
         order.setTotalAmount(total);
 

@@ -19,6 +19,8 @@ public class OrderMapper {
                         .map(orderItemMapper::toResponseDto)
                         .collect(Collectors.toSet());
         return new OrderResponseDto(
-                order.getId(), order.getTotalAmount(), order.getOrderStatus(), orderItemResponse);
+                order.getId(),
+                order.getTransactionReference(),
+                order.getTotalAmount(), order.getOrderStatus(), orderItemResponse);
     }
 }
