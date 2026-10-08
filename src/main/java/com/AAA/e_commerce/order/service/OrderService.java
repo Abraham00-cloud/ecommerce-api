@@ -117,6 +117,7 @@ public class OrderService {
         return allUserOrders.map(mapper::toOrderResponseDto);
     }
 
+    @Transactional
     public OrderResponseDto updateStatus(Long orderId, OrderStatus status) {
         Order order =
                 repository

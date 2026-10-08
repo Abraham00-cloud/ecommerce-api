@@ -16,7 +16,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Optional<Order> findByTransactionReference(String transactionReference);
 
-    List<Order> findByOrderStatusAndExpiredAtBefore(OrderStatus orderStatus, LocalDateTime currentTime);
 
     List<Order> findByOrderStatusAndExpiresAtBefore(OrderStatus orderStatus, LocalDateTime now);
 }
