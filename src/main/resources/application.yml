@@ -1,19 +1,14 @@
 spring:
   application:
     name: e_commerce
-  #  security:
-  #    user:
-  #      name: admin
-  #      password: "$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2"
   servlet:
     multipart:
       max-file-size: 5MB
       max-request-size: 5MB
   datasource:
-    # Fallback syntax: ${ENV_VAR_NAME:local_default_value}
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ecommerce_db_sgpq}?sslmode=require
-    username: ${DB_USER:ecommerce_db_sgpq_user}
-    password: ${DB_PASSWORD:PxDXoNLUdKnsH5nNtpL3G5imFdGKnUoN}
+    # Looks for your Render variable 'DATABASE_URL' first.
+    # Falls back to local defaults if it's missing (on your laptop).
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/ecommerce_db_sgpq}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -22,12 +17,11 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        # Instructs Hibernate to use the PostgreSQL dialect explicitly
         dialect: org.hibernate.dialect.PostgreSQLDialect
     database: postgresql
 
 paystack:
-  base-url: https://api.paystack.co
+  base-url: https://paystack.co
   secret-key: sk_test_d7dcccfaf6e1c4cc9e94b684c7b4c527f858c236
 app:
   admin:
