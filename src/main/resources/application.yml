@@ -6,10 +6,13 @@ spring:
       max-file-size: 5MB
       max-request-size: 5MB
   datasource:
-    # Looks for your Render variable 'DATABASE_URL' first.
-    # Falls back to local defaults if it's missing (on your laptop).
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/ecommerce_db_sgpq}
+    # 1. Added ?sslmode=require to enforce the secure cloud database handshake
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/ecommerce_db_sgpq}?sslmode=require
     driver-class-name: org.postgresql.Driver
+    # 2. Instructs HikariCP to try connecting for up to 30 seconds before crashing the app context
+    hikari:
+      connection-timeout: 30000
+      initialization-fail-timeout: 0
   jpa:
     hibernate:
       ddl-auto: update
