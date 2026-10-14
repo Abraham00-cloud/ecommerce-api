@@ -43,7 +43,9 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
                         request ->
-                                request.requestMatchers(
+                                request
+                                        // 1. Public Auth, Webhooks & Swagger Docs
+                                        .requestMatchers(
                                                 "/api/v1/users/register", "/api/v1/users/login")
                                         .permitAll()
                                         .requestMatchers("/api/v1/webhooks/**")
@@ -53,43 +55,58 @@ public class SecurityConfig {
                                                 "/swagger-ui/**",
                                                 "/swagger-ui.html")
                                         .permitAll()
-                                        .requestMatchers(
-                                                HttpMethod.POST,
-                                                "/api/v1/products/**",
-                                                "/api/v1/categories/**")
-                                        .hasRole("ADMIN")
-                                        .requestMatchers(
-                                                HttpMethod.PUT,
-                                                "/api/v1/products/**",
-                                                "/api/v1/categories/**")
-                                        .hasRole("ADMIN")
-                                        .requestMatchers(
-                                                HttpMethod.PATCH,
-                                                "/api/v1/products/**",
-                                                "/api/v1/categories/**")
-                                        .hasRole("ADMIN")
-                                        .requestMatchers(
-                                                HttpMethod.DELETE,
-                                                "/api/v1/products/**",
-                                                "/api/v1/categories/**")
-                                        .hasRole("ADMIN")
-                                        .requestMatchers(
-                                                HttpMethod.POST, "/api/v1/products/*/images/**")
-                                        .hasRole("ADMIN")
-                                        .requestMatchers(
-                                                HttpMethod.DELETE, "/api/v1/products/*/images/**")
-                                        .hasRole("ADMIN")
+
+                                        // 2. Public Read-Only Endpoints (Products & Categories)
                                         .requestMatchers(
                                                 HttpMethod.GET,
                                                 "/api/v1/products/**",
                                                 "/api/v1/categories/**")
                                         .permitAll()
+
+                                        // 3. Category Write Operations (Strictly ADMIN per PRD)
+                                        .requestMatchers(
+                                                HttpMethod.POST, "/api/v1/categories/**")
+                                        .hasRole("ADMIN")
+                                        .requestMatchers(
+                                                HttpMethod.PUT, "/api/v1/categories/**")
+                                        .hasRole("ADMIN")
+                                        .requestMatchers(
+                                                HttpMethod.PATCH, "/api/v1/categories/**")
+                                        .hasRole("ADMIN")
+                                        .requestMatchers(
+                                                HttpMethod.DELETE, "/api/v1/categories/**")
+                                        .hasRole("ADMIN")
+
+                                        // 4. Product & Image Write Operations (VENDOR or ADMIN)
+                                        .requestMatchers(
+                                                HttpMethod.POST,
+                                                "/api/v1/products/**",
+                                                "/api/v1/products/*/images/**")
+                                        .hasAnyRole("VENDOR", "ADMIN")
+                                        .requestMatchers(
+                                                HttpMethod.PUT,
+                                                "/api/v1/products/**",
+                                                "/api/v1/products/*/images/**")
+                                        .hasAnyRole("VENDOR", "ADMIN")
+                                        .requestMatchers(
+                                                HttpMethod.PATCH,
+                                                "/api/v1/products/**",
+                                                "/api/v1/products/*/images/**")
+                                        .hasAnyRole("VENDOR", "ADMIN")
+                                        .requestMatchers(
+                                                HttpMethod.DELETE,
+                                                "/api/v1/products/**",
+                                                "/api/v1/products/*/images/**")
+                                        .hasAnyRole("VENDOR", "ADMIN")
+
+                                        // 5. Authenticated Endpoints (Users, Cart, Order, Payment)
                                         .requestMatchers("/api/v1/users/update/**")
                                         .authenticated()
                                         .requestMatchers(
                                                 "/api/v1/cart/**",
                                                 "/api/v1/cartItem/**",
-                                                "/api/v1/order/**")
+                                                "/api/v1/order/**",
+                                                "/api/v1/payments/**")
                                         .authenticated()
                                         .anyRequest()
                                         .authenticated())

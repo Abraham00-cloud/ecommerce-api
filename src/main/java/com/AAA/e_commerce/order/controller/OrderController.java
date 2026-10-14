@@ -11,11 +11,9 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-@Service
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api/v1/order")
@@ -24,35 +22,35 @@ import org.springframework.web.bind.annotation.*;
 public class OrderController {
     private final OrderService orderService;
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'VENDOR')")
     @Operation(summary = "create Order")
     @PostMapping("/checkout/purchase")
     public OrderResponseDto createOrder() {
         return orderService.createOrder();
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'VENDOR')")
     @Operation(summary = "get all Orders for a user")
     @GetMapping("/mine")
     public Page<OrderResponseDto> getUserOrders(@ParameterObject Pageable pageable) {
         return orderService.getMyOrders(pageable);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "get all Order")
+    @PreAuthorize("hasAnyRole('VENDOR', 'ADMIN')")
+    @Operation(summary = "get all Orders")
     @GetMapping("/all")
-    public Page<OrderResponseDto> getAllOrders(Pageable pageable) {
+    public Page<OrderResponseDto> getAllOrders(@ParameterObject Pageable pageable) {
         return orderService.getAllOrders(pageable);
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'VENDOR', 'ADMIN')")
     @Operation(summary = "get Order by id")
     @GetMapping("/{orderId}")
     public OrderResponseDto getOrder(@PathVariable Long orderId) {
         return orderService.getOrder(orderId);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('VENDOR', 'ADMIN')")
     @Operation(summary = "update Order status")
     @PatchMapping("/{orderId}/status")
     public OrderResponseDto updateStatus(
@@ -61,7 +59,7 @@ public class OrderController {
         return orderService.updateStatus(orderId, status);
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'VENDOR', 'ADMIN')")
     @Operation(summary = "cancel Order")
     @DeleteMapping("/{orderId}")
     public OrderResponseDto cancelOrder(@PathVariable Long orderId) {

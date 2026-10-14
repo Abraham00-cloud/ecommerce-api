@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,7 +38,7 @@ public class OrderService {
     public OrderResponseDto createOrder() {
         User user = userService.getAuthenticatedUser();
         Cart cart = user.getCart();
-        if (cart.getCartItems().isEmpty()) {
+        if (cart == null || cart.getCartItems().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cart is empty");
         }
         Order order = new Order();
@@ -59,7 +58,7 @@ public class OrderService {
             if (cartItem.getQuantity() > product.getQuantity()) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "Not enough stock for product;" + product.getName());
+                        "Not enough stock for product: " + product.getName());
             }
             product.setQuantity(product.getQuantity() - cartItem.getQuantity());
 
@@ -79,7 +78,6 @@ public class OrderService {
                         .map(OrderItem::getTotalPrice)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-
         order.setTotalAmount(total);
 
         Order savedOrder = repository.save(order);
@@ -91,6 +89,7 @@ public class OrderService {
         return repository.findAll(pageable).map(mapper::toOrderResponseDto);
     }
 
+    @Transactional
     public OrderResponseDto getOrder(Long orderId) {
         User currentUser = userService.getAuthenticatedUser();
 
@@ -102,8 +101,12 @@ public class OrderService {
                                         new ResponseStatusException(
                                                 HttpStatus.NOT_FOUND, "Order not found"));
 
-        if (!order.getUser().getId().equals(currentUser.getId())
-                && !currentUser.getRole().equals(Role.ADMIN)) {
+        boolean isOrderOwner = order.getUser().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
+        boolean isVendorWithProductInOrder =
+                currentUser.getRole() == Role.VENDOR && hasVendorProduct(order, currentUser);
+
+        if (!isOrderOwner && !isAdmin && !isVendorWithProductInOrder) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN, "You do not have permission to view this order");
         }
@@ -119,6 +122,7 @@ public class OrderService {
 
     @Transactional
     public OrderResponseDto updateStatus(Long orderId, OrderStatus status) {
+        User currentUser = userService.getAuthenticatedUser();
         Order order =
                 repository
                         .findById(orderId)
@@ -126,9 +130,16 @@ public class OrderService {
                                 () ->
                                         new ResponseStatusException(
                                                 HttpStatus.NOT_FOUND, "Order not found"));
+
+        if (currentUser.getRole() == Role.VENDOR && !hasVendorProduct(order, currentUser)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You can only update orders containing your products");
+        }
+
         order.setOrderStatus(status);
-        Order updateOrder = repository.save(order);
-        return mapper.toOrderResponseDto(order);
+        Order updatedOrder = repository.save(order);
+        return mapper.toOrderResponseDto(updatedOrder);
     }
 
     @Transactional
@@ -141,15 +152,16 @@ public class OrderService {
                                 () ->
                                         new ResponseStatusException(
                                                 HttpStatus.NOT_FOUND, "Order not found"));
+
         if (!order.getUser().getId().equals(currentUser.getId())
-                && !currentUser.getRole().equals(Role.ADMIN)) {
+                && currentUser.getRole() != Role.ADMIN) {
             throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN, "You do not have permission to view this order");
+                    HttpStatus.FORBIDDEN, "You do not have permission to cancel this order");
         }
         if (order.getOrderStatus() == OrderStatus.SHIPPED
                 || order.getOrderStatus() == OrderStatus.DELIVERED) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "cannot cancel Shipped or Delivered order");
+                    HttpStatus.BAD_REQUEST, "Cannot cancel Shipped or Delivered order");
         }
         order.setOrderStatus(OrderStatus.CANCELLED);
         for (OrderItem orderItem : order.getOrderItems()) {
@@ -158,5 +170,17 @@ public class OrderService {
         }
         Order cancelledOrder = repository.save(order);
         return mapper.toOrderResponseDto(cancelledOrder);
+    }
+
+    private boolean hasVendorProduct(Order order, User vendor) {
+        return order.getOrderItems().stream()
+                .anyMatch(
+                        item ->
+                                item.getProduct() != null
+                                        && item.getProduct().getVendor() != null
+                                        && item.getProduct()
+                                        .getVendor()
+                                        .getId()
+                                        .equals(vendor.getId()));
     }
 }

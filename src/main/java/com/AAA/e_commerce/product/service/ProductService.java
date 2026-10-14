@@ -6,6 +6,10 @@ import com.AAA.e_commerce.product.mapper.ProductMapper;
 import com.AAA.e_commerce.product.model.Category;
 import com.AAA.e_commerce.product.model.Product;
 import com.AAA.e_commerce.product.repository.ProductRepository;
+import com.AAA.e_commerce.user.model.Role;
+import com.AAA.e_commerce.user.model.User;
+import com.AAA.e_commerce.user.service.UserService;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,9 +23,15 @@ public class ProductService {
     private final ProductMapper mapper;
     private final ProductRepository repository;
     private final CategoryService categoryService;
+    private final UserService userService;
 
+    @Transactional
     public ProductResponseDto createProduct(ProductRequestDto requestDto) {
         Product product = mapper.toProduct(requestDto);
+
+        User currentUser = userService.getAuthenticatedUser();
+        product.setVendor(currentUser);
+
         Category category = categoryService.getCategoryById(requestDto.categoryId());
         product.setCategory(category);
 
@@ -30,13 +40,7 @@ public class ProductService {
     }
 
     public ProductResponseDto getProduct(Long id) {
-        Product product =
-                repository
-                        .findById(id)
-                        .orElseThrow(
-                                () ->
-                                        new ResponseStatusException(
-                                                HttpStatus.NOT_FOUND, "product not found"));
+        Product product = getProductById(id);
         return mapper.toProductResponseDto(product);
     }
 
@@ -45,14 +49,11 @@ public class ProductService {
         return productPage.map(mapper::toProductResponseDto);
     }
 
+    @Transactional
     public ProductResponseDto updateProduct(Long id, ProductRequestDto requestDto) {
-        Product product =
-                repository
-                        .findById(id)
-                        .orElseThrow(
-                                () ->
-                                        new ResponseStatusException(
-                                                HttpStatus.NOT_FOUND, "product not found"));
+        Product product = getProductById(id);
+        validateProductOwnership(product);
+
         Category category = categoryService.getCategoryById(requestDto.categoryId());
 
         product.setName(requestDto.name());
@@ -63,32 +64,42 @@ public class ProductService {
         product.setCategory(category);
 
         Product updatedProduct = repository.save(product);
-        return mapper.toProductResponseDto(product);
+        return mapper.toProductResponseDto(updatedProduct);
     }
 
+    @Transactional
     public void deleteProduct(Long id) {
-        Product product =
-                repository
-                        .findById(id)
-                        .orElseThrow(
-                                () ->
-                                        new ResponseStatusException(
-                                                HttpStatus.NOT_FOUND, "product not found"));
+        Product product = getProductById(id);
+        validateProductOwnership(product);
+
         repository.delete(product);
     }
 
     public Product getProductById(Long productId) {
-        Product product =
-                repository
-                        .findById(productId)
-                        .orElseThrow(
-                                () ->
-                                        new ResponseStatusException(
-                                                HttpStatus.NOT_FOUND, "Product not found"));
-        return product;
+        return repository
+                .findById(productId)
+                .orElseThrow(
+                        () ->
+                                new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND, "Product not found"));
     }
 
     public void saveProduct(Product product) {
-        Product savedProduct = repository.save(product);
+        repository.save(product);
+    }
+
+    private void validateProductOwnership(Product product) {
+        User currentUser = userService.getAuthenticatedUser();
+
+        boolean isOwner =
+                product.getVendor() != null
+                        && product.getVendor().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
+
+        if (!isOwner && !isAdmin) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You do not have permission to modify or delete this product");
+        }
     }
 }

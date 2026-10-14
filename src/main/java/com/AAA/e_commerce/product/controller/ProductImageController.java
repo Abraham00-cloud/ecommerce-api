@@ -30,7 +30,7 @@ public class ProductImageController {
     }
 
     @DeleteMapping("/{imageId}")
-    public void deleteImage(Long imageId) {
+    public void deleteImage(@PathVariable Long imageId) {
         service.deleteImage(imageId);
     }
 }

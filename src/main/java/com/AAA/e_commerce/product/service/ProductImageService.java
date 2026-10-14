@@ -5,6 +5,9 @@ import com.AAA.e_commerce.product.mapper.ProductImageMapper;
 import com.AAA.e_commerce.product.model.Product;
 import com.AAA.e_commerce.product.model.ProductImage;
 import com.AAA.e_commerce.product.repository.ProductImageRepository;
+import com.AAA.e_commerce.user.model.Role;
+import com.AAA.e_commerce.user.model.User;
+import com.AAA.e_commerce.user.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,27 +22,35 @@ public class ProductImageService {
     private final ProductImageRepository imageRepository;
     private final ProductImageMapper mapper;
     private final ProductService productService;
+    private final UserService userService;
 
+    @Transactional
     public ProductImageResponseDto addImages(Long productId, String url) {
         Product product = productService.getProductById(productId);
+        validateProductOwnership(product);
+
         ProductImage image = new ProductImage();
         image.setProduct(product);
         image.setUrl(url);
+
         String filename = url.substring(url.lastIndexOf("/") + 1);
-        String fileType = filename.substring(filename.lastIndexOf(".") + 1);
+        String fileType =
+                filename.contains(".")
+                        ? filename.substring(filename.lastIndexOf(".") + 1)
+                        : "unknown";
 
         image.setFileName(filename);
         image.setFileType(fileType);
         product.getImages().add(image);
 
-        imageRepository.save(image);
+        ProductImage savedImage = imageRepository.save(image);
         productService.saveProduct(product);
 
-        return mapper.toProductImageResponseDto(image);
+        return mapper.toProductImageResponseDto(savedImage);
     }
 
     public Page<ProductImageResponseDto> getImagesByProduct(Long productId, Pageable pageable) {
-        Product product = productService.getProductById(productId);
+        productService.getProductById(productId);
         Page<ProductImage> images = imageRepository.findByProductId(productId, pageable);
         return images.map(mapper::toProductImageResponseDto);
     }
@@ -53,7 +64,25 @@ public class ProductImageService {
                                 () ->
                                         new ResponseStatusException(
                                                 HttpStatus.NOT_FOUND, "Image not found"));
+
+        validateProductOwnership(image.getProduct());
+
         image.getProduct().getImages().remove(image);
         imageRepository.delete(image);
+    }
+
+    private void validateProductOwnership(Product product) {
+        User currentUser = userService.getAuthenticatedUser();
+
+        boolean isOwner =
+                product.getVendor() != null
+                        && product.getVendor().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
+
+        if (!isOwner && !isAdmin) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You do not have permission to manage images for this product");
+        }
     }
 }

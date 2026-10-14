@@ -35,13 +35,24 @@ public class UserService {
         if (userRepository.findByEmail(requestDto.email()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User already exists");
         }
+
+        // Block anyone from registering themselves as ADMIN
+        if (requestDto.role() == Role.ADMIN) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "Cannot self-register as an ADMIN");
+        }
+
         User user = new User();
         user.setFirstName(requestDto.firstName());
         user.setLastName(requestDto.lastName());
         user.setEmail(requestDto.email());
         user.setPassword(passwordEncoder.encode(requestDto.password()));
-        user.setRole(Role.USER);
 
+        // Default to USER if role is null in the JSON payload
+        Role assignedRole = (requestDto.role() != null) ? requestDto.role() : Role.USER;
+        user.setRole(assignedRole);
+
+        // Give everyone a cart so nothing NullPointerExceptions if a VENDOR also tests buying
         Cart cart = new Cart();
         cart.setUser(user);
         user.setCart(cart);

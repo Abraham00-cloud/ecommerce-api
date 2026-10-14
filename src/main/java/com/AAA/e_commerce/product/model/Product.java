@@ -1,5 +1,6 @@
 package com.AAA.e_commerce.product.model;
 
+import com.AAA.e_commerce.user.model.User;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -30,4 +31,8 @@ public class Product {
     @ManyToOne()
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vendor_id")
+    private User vendor;
 }
