@@ -58,7 +58,7 @@ public class ProductService {
 
         product.setName(requestDto.name());
         product.setPrice(requestDto.price());
-        product.setWeight(requestDto.weight());
+        product.setWeight(requestDto.weight() != null ? requestDto.weight() : 0L);
         product.setDescription(requestDto.description());
         product.setQuantity(requestDto.quantity());
         product.setCategory(category);

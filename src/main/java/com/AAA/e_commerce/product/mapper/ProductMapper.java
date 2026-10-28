@@ -16,7 +16,7 @@ public class ProductMapper {
         Product product = new Product();
         product.setName(requestDto.name());
         product.setPrice(requestDto.price());
-        product.setWeight(requestDto.weight());
+        product.setWeight(requestDto.weight() != null ? requestDto.weight() : 0L);
         product.setQuantity(requestDto.quantity());
         product.setDescription(requestDto.description());
         return product;

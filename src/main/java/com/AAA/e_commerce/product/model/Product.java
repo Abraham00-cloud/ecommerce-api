@@ -21,7 +21,7 @@ public class Product {
     private Long version;
     private String name;
     private BigDecimal price;
-    private long weight;
+    private Long weight;
     private String description;
     private Long quantity;
 
