@@ -10,7 +10,7 @@ public record ProductRequestDto(
         @NotNull(message = "Price is required")
                 @Positive(message = "Price must be greater than zero")
                 BigDecimal price,
-        @Positive(message = "Weight must be a positive number") long weight,
+        @Positive(message = "Weight must be a positive number") Long weight,
         @NotNull(message = "Quantity is required")
                 @Positive(message = "Quantity must be a positive number")
                 Long quantity,
