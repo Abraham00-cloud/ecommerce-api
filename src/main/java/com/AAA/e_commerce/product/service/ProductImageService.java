@@ -1,5 +1,6 @@
 package com.AAA.e_commerce.product.service;
 
+import com.AAA.e_commerce.cloudinary.service.CloudinaryService;
 import com.AAA.e_commerce.product.dto.response.ProductImageResponseDto;
 import com.AAA.e_commerce.product.mapper.ProductImageMapper;
 import com.AAA.e_commerce.product.model.Product;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile; // Imported MultipartFile
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -23,21 +25,27 @@ public class ProductImageService {
     private final ProductImageMapper mapper;
     private final ProductService productService;
     private final UserService userService;
+    private final CloudinaryService cloudinaryService;
 
     @Transactional
-    public ProductImageResponseDto addImages(Long productId, String url) {
+    public ProductImageResponseDto addImages(Long productId, MultipartFile file) {
         Product product = productService.getProductById(productId);
         validateProductOwnership(product);
+
+        String url = cloudinaryService.uploadImage(file, "shopease/products");
 
         ProductImage image = new ProductImage();
         image.setProduct(product);
         image.setUrl(url);
 
-        String filename = url.substring(url.lastIndexOf("/") + 1);
-        String fileType =
-                filename.contains(".")
-                        ? filename.substring(filename.lastIndexOf(".") + 1)
-                        : "unknown";
+        String originalFilename = file.getOriginalFilename();
+        String filename = (originalFilename != null && !originalFilename.isBlank())
+                ? originalFilename
+                : url.substring(url.lastIndexOf("/") + 1);
+
+        String fileType = file.getContentType() != null
+                ? file.getContentType()
+                : "unknown";
 
         image.setFileName(filename);
         image.setFileType(fileType);
